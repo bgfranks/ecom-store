@@ -10,7 +10,7 @@ import ProductImages from '@/components/shared/product/product-images';
 export const generateMetadata = async ({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> => {
   const slug = (await params).slug;
   const product = await getProductBySlug(slug);
