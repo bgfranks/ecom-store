@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { getProductBySlug } from '@/lib/actions/product.actions';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
@@ -5,6 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ProductPrice from '@/components/shared/product/product-price';
 import ProductImages from '@/components/shared/product/product-images';
+
+export const generateMetadata = async ({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> => {
+  const slug = (await params).slug;
+  const product = await getProductBySlug(slug);
+
+  return {
+    title: product?.name,
+  };
+};
 
 const ProductDetailPage = async (props: {
   params: Promise<{ slug: string }>;
