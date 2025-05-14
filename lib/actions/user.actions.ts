@@ -1,4 +1,4 @@
-'user server';
+'use server';
 
 import { signInFormSchema } from '../validators';
 import { signIn, signOut } from '@/auth';
@@ -17,7 +17,7 @@ export async function signInWithCredentials(
 
     await signIn('credentials', user);
 
-    return { success: true, message: 'Signed In Successfully' };
+    return { success: true, message: 'Signed in Successfully' };
   } catch (error) {
     if (isRedirectError(error)) {
       throw error;
