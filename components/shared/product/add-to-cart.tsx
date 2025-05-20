@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+// import { Plus } from 'lucide-react';
 import { addItemToCart } from '@/lib/actions/cart.actions';
 
 const AddToCart = ({ item }: { item: CartItem }) => {
