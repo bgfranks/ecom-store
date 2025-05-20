@@ -3,54 +3,20 @@ import { useRouter } from 'next/navigation';
 import { Cart, CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Plus, Minus, XCircle } from 'lucide-react';
+import { Plus, Minus, XCircle, Loader } from 'lucide-react';
 import { addItemToCart, RemoveItemFromCart } from '@/lib/actions/cart.actions';
+import { useTransition } from 'react';
 
 const AddToCart = ({ item, cart }: { item: CartItem; cart?: Cart }) => {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleAddToCart = async () => {
-    const res = await addItemToCart(item);
+    startTransition(async () => {
+      const res = await addItemToCart(item);
 
-    if (!res.success) {
-      toast(
-        <div className='flex gap-4 items-center bg-destructive text-white py-3 px-4 rounded-lg shadow-xl'>
-          <div className=''>
-            <XCircle className='w-5 h-5' />
-          </div>
-          <div className='flex flex-col items-start'>
-            <span className='text-sm'>{res.message}</span>
-            <span className='text-xs text-gray-200 text-center'>
-              Please try again later
-            </span>
-          </div>
-        </div>,
-        {
-          unstyled: true,
-        }
-      );
-      return;
-    }
-
-    toast.success(res.message, {
-      action: (
-        <Button className='bg-primary' onClick={() => router.push('/cart')}>
-          Go to Cart
-        </Button>
-      ),
-    });
-  };
-
-  // check if item is in cart
-  const itemExist =
-    cart && cart.items.find((x) => x.productId === item.productId);
-
-  const handleRemoveFromCart = async () => {
-    const res = await RemoveItemFromCart(item.productId);
-
-    return res.success
-      ? toast.success(res.message)
-      : toast(
+      if (!res.success) {
+        toast(
           <div className='flex gap-4 items-center bg-destructive text-white py-3 px-4 rounded-lg shadow-xl'>
             <div className=''>
               <XCircle className='w-5 h-5' />
@@ -66,20 +32,76 @@ const AddToCart = ({ item, cart }: { item: CartItem; cart?: Cart }) => {
             unstyled: true,
           }
         );
+        return;
+      }
+
+      toast.success(res.message, {
+        action: (
+          <Button className='bg-primary' onClick={() => router.push('/cart')}>
+            Go to Cart
+          </Button>
+        ),
+      });
+    });
+  };
+
+  // check if item is in cart
+  const itemExist =
+    cart && cart.items.find((x) => x.productId === item.productId);
+
+  const handleRemoveFromCart = async () => {
+    startTransition(async () => {
+      const res = await RemoveItemFromCart(item.productId);
+
+      if (!res.success) {
+        toast(
+          <div className='flex gap-4 items-center bg-destructive text-white py-3 px-4 rounded-lg shadow-xl'>
+            <div className=''>
+              <XCircle className='w-5 h-5' />
+            </div>
+            <div className='flex flex-col items-start'>
+              <span className='text-sm'>{res.message}</span>
+              <span className='text-xs text-gray-200 text-center'>
+                Please try again later
+              </span>
+            </div>
+          </div>,
+          {
+            unstyled: true,
+          }
+        );
+        return;
+      }
+
+      toast.success(res.message);
+    });
   };
   return itemExist ? (
     <div>
       <Button type='button' variant='outline' onClick={handleRemoveFromCart}>
-        <Minus className='h-4 w-4' />
+        {isPending ? (
+          <Loader className='w-4 h-4 animate-spin' />
+        ) : (
+          <Minus className='h-4 w-4' />
+        )}
       </Button>
       <span className='px-2'>{itemExist.qty}</span>
       <Button type='button' variant='outline' onClick={handleAddToCart}>
-        <Plus className='h-4 w-4' />
+        {isPending ? (
+          <Loader className='w-4 h-4 animate-spin' />
+        ) : (
+          <Plus className='h-4 w-4' />
+        )}
       </Button>
     </div>
   ) : (
     <Button className='w-full' type='button' onClick={handleAddToCart}>
-      Add To Cart
+      {isPending ? (
+        <Loader className='w-4 h-4 animate-spin' />
+      ) : (
+        <Plus className='w-4 h-4' />
+      )}{' '}
+      Add to Cart
     </Button>
   );
 };
