@@ -1,41 +1,107 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { CartItem } from '@/types';
+import { Cart, CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-// import { Plus } from 'lucide-react';
-import { addItemToCart } from '@/lib/actions/cart.actions';
+import { Plus, Minus, XCircle, Loader } from 'lucide-react';
+import { addItemToCart, RemoveItemFromCart } from '@/lib/actions/cart.actions';
+import { useTransition } from 'react';
 
-const AddToCart = ({ item }: { item: CartItem }) => {
+const AddToCart = ({ item, cart }: { item: CartItem; cart?: Cart }) => {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleAddToCart = async () => {
-    const res = await addItemToCart(item);
+    startTransition(async () => {
+      const res = await addItemToCart(item);
 
-    if (!res.success) {
-      toast(res.message, {
-        description: 'Please try again later',
-        unstyled: true,
-        className: 'bg-red-500 text-white px-5 py-3 rounded-lg shadow-lg',
-        classNames: {
-          description: 'text-xs text-gray-200 text-center',
-        },
+      if (!res.success) {
+        toast(
+          <div className='flex gap-4 items-center bg-destructive text-white py-3 px-4 rounded-lg shadow-xl'>
+            <div className=''>
+              <XCircle className='w-5 h-5' />
+            </div>
+            <div className='flex flex-col items-start'>
+              <span className='text-sm'>{res.message}</span>
+              <span className='text-xs text-gray-200 text-center'>
+                Please try again later
+              </span>
+            </div>
+          </div>,
+          {
+            unstyled: true,
+          }
+        );
+        return;
+      }
+
+      toast.success(res.message, {
+        action: (
+          <Button className='bg-primary' onClick={() => router.push('/cart')}>
+            Go to Cart
+          </Button>
+        ),
       });
-      return;
-    }
-
-    toast.success(res.message, {
-      action: (
-        <Button className='bg-primary' onClick={() => router.push('/cart')}>
-          Go to Cart
-        </Button>
-      ),
     });
   };
 
-  return (
+  // check if item is in cart
+  const itemExist =
+    cart && cart.items.find((x) => x.productId === item.productId);
+
+  const handleRemoveFromCart = async () => {
+    startTransition(async () => {
+      const res = await RemoveItemFromCart(item.productId);
+
+      if (!res.success) {
+        toast(
+          <div className='flex gap-4 items-center bg-destructive text-white py-3 px-4 rounded-lg shadow-xl'>
+            <div className=''>
+              <XCircle className='w-5 h-5' />
+            </div>
+            <div className='flex flex-col items-start'>
+              <span className='text-sm'>{res.message}</span>
+              <span className='text-xs text-gray-200 text-center'>
+                Please try again later
+              </span>
+            </div>
+          </div>,
+          {
+            unstyled: true,
+          }
+        );
+        return;
+      }
+
+      toast.success(res.message);
+    });
+  };
+  return itemExist ? (
+    <div>
+      <Button type='button' variant='outline' onClick={handleRemoveFromCart}>
+        {isPending ? (
+          <Loader className='w-4 h-4 animate-spin' />
+        ) : (
+          <Minus className='h-4 w-4' />
+        )}
+      </Button>
+      <span className='px-2'>{itemExist.qty}</span>
+      <Button type='button' variant='outline' onClick={handleAddToCart}>
+        {isPending ? (
+          <Loader className='w-4 h-4 animate-spin' />
+        ) : (
+          <Plus className='h-4 w-4' />
+        )}
+      </Button>
+    </div>
+  ) : (
     <Button className='w-full' type='button' onClick={handleAddToCart}>
-      Add To Cart
+      {isPending ? (
+        <Loader className='w-4 h-4 animate-spin' />
+      ) : (
+        <Plus className='w-4 h-4' />
+      )}{' '}
+      Add to Cart
     </Button>
   );
 };
